@@ -212,6 +212,21 @@ lemma Invariant.apply (hD : Invariant τ σ D) (h : Hadron) (i : Flavor) (z Q2 :
     D (τ h) (σ i) z Q2 = D h i z Q2 :=
   invariant_iff.1 hD h i z Q2
 
+/-- A sum over the image of a set of partons under an injective map of the partons is the sum of
+the pulled-back family over the set. -/
+lemma sum_image_comap [DecidableEq Flavor] (τ : Hadron' → Hadron)
+    {σ : Flavor' → Flavor} {t : Finset Flavor'} (hσ : Set.InjOn σ t) (D : Frag Hadron Flavor)
+    (h : Hadron') (z Q2 : ℝ) :
+    ∑ i ∈ t.image σ, D (τ h) i z Q2 = ∑ i ∈ t, comap τ σ D h i z Q2 :=
+  Finset.sum_image hσ
+
+/-- For an invariant family, a sum over the image of a set of partons in the image hadron is the
+sum over the set in the hadron. -/
+lemma Invariant.sum_image [DecidableEq Flavor] (hD : Invariant τ σ D) {t : Finset Flavor}
+    (hσ : Set.InjOn σ t) (h : Hadron) (z Q2 : ℝ) :
+    ∑ i ∈ t.image σ, D (τ h) i z Q2 = ∑ i ∈ t, D h i z Q2 := by
+  rw [sum_image_comap τ hσ D h z Q2, hD]
+
 /-- A family invariant under two maps of the partons paired with the same surjective map of the
 hadrons takes the same value on both images of a parton inside one hadron:
 `D_h^{σ' i} = D_h^{σ i}`. This is what reduces the number of independent fragmentation functions of

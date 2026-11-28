@@ -189,6 +189,19 @@ theorem map_injective {ρ : Flavor → Flavor'} (hρ : Function.Injective ρ) :
   intro s t hst
   cases s <;> cases t <;> simp_all [hρ.eq_iff]
 
+theorem map_surjective {ρ : Flavor → Flavor'} (hρ : Function.Surjective ρ) :
+    Function.Surjective (map ρ) := by
+  rintro (i | i | _)
+  · obtain ⟨j, rfl⟩ := hρ i
+    exact ⟨quark j, rfl⟩
+  · obtain ⟨j, rfl⟩ := hρ i
+    exact ⟨antiquark j, rfl⟩
+  · exact ⟨gluon, rfl⟩
+
+theorem map_bijective {ρ : Flavor → Flavor'} (hρ : Function.Bijective ρ) :
+    Function.Bijective (map ρ) :=
+  ⟨map_injective hρ.1, map_surjective hρ.2⟩
+
 /-- The two species of a quark flavour: its quark and its antiquark. The gluon belongs to no
 flavour, so it lies in no `flavorPair`. -/
 def flavorPair [DecidableEq Flavor] (i : Flavor) : Finset (Species Flavor) :=
