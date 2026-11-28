@@ -7,6 +7,7 @@ module
 
 public import EpsilonEridani.Mathematics.SpecialFunctions.BesselK.Basic
 public import EpsilonEridani.QFT.Scattering.Photoproduction.Kinematics.Basic
+import EpsilonEridani.Mathematics.Analysis.SpecialFunctions.Log.Basic
 import Mathlib.Analysis.Calculus.Deriv.Pow
 import Mathlib.Analysis.SpecialFunctions.Pow.Asymptotics
 import Mathlib.MeasureTheory.Integral.IntegralEqImproper
@@ -70,6 +71,7 @@ namespace EpsilonEridani
 namespace QFT
 namespace Scattering
 namespace Photoproduction
+namespace Flux
 
 /-! ### The dimensionless profile -/
 
@@ -236,9 +238,13 @@ theorem isEquivalent_photonFluxProfile_neg_log :
   rw [Pi.add_apply, photonFluxProfile_def]
   ring
 
+end Flux
+
 /-! ### The spectrum of a charged source -/
 
 namespace Kinematics.ChargedSource
+
+open Flux
 
 /-- The integrated equivalent-photon flux `n(k)` of a point source `s` of charge `Z = s.charge`
 and Lorentz factor `γ = s.gamma`, at fine-structure constant `α`, photon energy `k` and minimum

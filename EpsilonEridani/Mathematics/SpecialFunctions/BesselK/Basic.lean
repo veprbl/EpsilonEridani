@@ -9,6 +9,7 @@ public import Mathlib.Analysis.Asymptotics.AsymptoticEquivalent
 public import Mathlib.Analysis.SpecialFunctions.Trigonometric.DerivHyp
 public import Mathlib.MeasureTheory.Integral.Bochner.Set
 public import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
+import EpsilonEridani.Mathematics.Analysis.SpecialFunctions.Log.Basic
 import Mathlib.Analysis.Calculus.Deriv.MeanValue
 import Mathlib.Analysis.Calculus.ParametricIntegral
 import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
@@ -328,11 +329,6 @@ theorem besselK_le_exp_mul_besselK (ν : ℝ) {x₀ x : ℝ} (hx₀ : 0 < x₀) 
   nlinarith [one_le_cosh t]
 
 /-! ### Behaviour at the origin -/
-
-/-- `-log x → ∞` as `x → 0⁺`, the divergence that every logarithmic small-argument estimate
-compares against. -/
-theorem tendsto_neg_log_nhdsGT_zero : Tendsto (fun x : ℝ ↦ -log x) (𝓝[>] 0) atTop :=
-  tendsto_neg_atBot_atTop.comp tendsto_log_nhdsGT_zero
 
 /-- The remainder `∫₀^∞ exp (-x cosh t) exp (-t) dt` of `K₁(x)` beyond `exp (-x) / x` converges
 for `x ≥ 0`. -/
