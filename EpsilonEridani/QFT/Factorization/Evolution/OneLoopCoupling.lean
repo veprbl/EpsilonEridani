@@ -365,13 +365,13 @@ theorem isBigO_oneLoopCouplingLogScale_sub_inv (h : β₀ * a₀ ≠ 0) :
   have hct : 2 < |β₀ * a₀| * t := by rwa [div_lt_iff₀' hc] at ht
   have hD : |β₀ * a₀| * t / 2 ≤ |1 + β₀ * a₀ * t| := by
     have := abs_sub_abs_le_abs_sub (β₀ * a₀ * t) (-1)
-    rw [abs_mul _ t, abs_of_pos ht0, abs_neg, abs_one, sub_neg_eq_add, add_comm] at this
+    rw [abs_mul _ t, abs_of_pos ht0, abs_neg, abs_one, sub_neg_eq_add,
+      add_comm (β₀ * a₀ * t) 1] at this
     linarith
   have hpos : 0 < |β₀| * |β₀ * a₀| * t ^ 2 / 2 := by positivity
   have hD0 : 1 + β₀ * a₀ * t ≠ 0 := abs_pos.1 (by linarith)
-  rw [oneLoopCouplingLogScale_sub_inv (left_ne_zero_of_mul h) ht0.ne' hD0, norm_neg, norm_inv,
-    Real.norm_eq_abs, Real.norm_eq_abs, abs_of_pos (inv_pos.2 (pow_pos ht0 2)), abs_mul, abs_mul,
-    abs_of_pos ht0]
+  rw [oneLoopCouplingLogScale_sub_inv (left_ne_zero_of_mul h) ht0.ne' hD0]
+  simp only [norm_neg, norm_inv, norm_mul, norm_pow, Real.norm_eq_abs, abs_of_pos ht0]
   calc (|β₀| * t * |1 + β₀ * a₀ * t|)⁻¹ ≤ (|β₀| * |β₀ * a₀| * t ^ 2 / 2)⁻¹ := by
         refine inv_anti₀ hpos ?_
         calc |β₀| * |β₀ * a₀| * t ^ 2 / 2 = |β₀| * t * (|β₀ * a₀| * t / 2) := by ring
