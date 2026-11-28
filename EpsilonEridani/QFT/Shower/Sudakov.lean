@@ -140,12 +140,33 @@ lemma sudakov_le_one {K : ℝ → ℝ} {t T : ℝ} (h : 0 ≤ ∫ s in t..T, K s
   rw [sudakov, Real.exp_le_one_iff]
   linarith
 
-/-- The Sudakov form factor is continuous in the lower scale, for a continuous kernel. -/
-lemma continuous_sudakov {K : ℝ → ℝ} (hK : Continuous K) (T : ℝ) :
+/-- A non-positive integrated kernel gives a Sudakov factor of at least one: the dual of
+`sudakov_le_one`, stated in terms of the integral for the same reason. -/
+lemma one_le_sudakov {K : ℝ → ℝ} {t T : ℝ} (h : ∫ s in t..T, K s ≤ 0) :
+    1 ≤ sudakov K t T := by
+  rw [sudakov, Real.one_le_exp_iff]
+  linarith
+
+/-- The Sudakov form factor tends to `0` as the lower scale falls, when the integrated kernel
+diverges there. -/
+lemma tendsto_sudakov_atBot {K : ℝ → ℝ} {T : ℝ}
+    (hdiv : Filter.Tendsto (fun t => ∫ s in t..T, K s) Filter.atBot Filter.atTop) :
+    Filter.Tendsto (fun t => sudakov K t T) Filter.atBot (nhds 0) := by
+  simpa [sudakov, Function.comp_def] using
+    Real.tendsto_exp_atBot.comp (Filter.tendsto_neg_atTop_atBot.comp hdiv)
+
+/-- The Sudakov form factor of a constant kernel of rate `r`, in closed form. -/
+lemma sudakov_const (r t T : ℝ) : sudakov (fun _ => r) t T = Real.exp (-((T - t) * r)) := by
+  rw [sudakov, intervalIntegral.integral_const, smul_eq_mul]
+
+/-- The Sudakov form factor is continuous in the lower scale, for a kernel that is integrable on
+every bounded interval. -/
+@[fun_prop]
+lemma continuous_sudakov {K : ℝ → ℝ}
+    (hK : ∀ a b, IntervalIntegrable K MeasureTheory.volume a b) (T : ℝ) :
     Continuous fun t => sudakov K t T := by
   have hprim : Continuous fun t : ℝ => ∫ s in t..T, K s := by
-    refine (intervalIntegral.continuous_primitive (μ := MeasureTheory.volume)
-      (fun a b => hK.intervalIntegrable a b) T).neg.congr fun t => ?_
+    refine (intervalIntegral.continuous_primitive hK T).neg.congr fun t => ?_
     simp only [Pi.neg_apply]
     rw [intervalIntegral.integral_symm t T, neg_neg]
   simpa [sudakov] using (continuous_neg.comp hprim).rexp

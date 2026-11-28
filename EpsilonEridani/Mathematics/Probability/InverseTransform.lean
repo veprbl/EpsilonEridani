@@ -48,15 +48,28 @@ and the law is unaffected.
   presented through its values on left-infinite intervals, which is how a law built from a
   density arrives, and `EpsilonEridani.IsQuantileFunction.hasLaw_cdf` for one presented through
   its cumulative distribution function.
-* `EpsilonEridani.hasLaw_neg_log_one_sub_div` and `EpsilonEridani.hasLaw_neg_log_div`: the
-  exponential law of rate `r` is the law of `u ↦ -log (1 - u) / r`, and equally of
-  `u ↦ -log u / r`.
+* `EpsilonEridani.hasLaw_neg_log_one_sub_div_expMeasure` and
+  `EpsilonEridani.hasLaw_neg_log_div_expMeasure`: the exponential law of rate `r` is the law of
+  `u ↦ -log (1 - u) / r`, and equally of `u ↦ -log u / r`.
 
 ## References
 
 * L. Devroye, *Non-Uniform Random Variate Generation*, Springer 1986, Chapter II.
 * P. Embrechts and M. Hofert, *A note on generalized inverses*, Mathematical Methods of
   Operations Research 77 (2013), 423--432, for the characterisation and its consequences.
+
+## Prior formalization
+
+The characterisation and the proof plan follow `TauCeti.Probability.Quantile`, which defines the
+canonical generalised inverse `MeasureTheory.Measure.quantile`, proves its characterisation
+`MeasureTheory.Measure.quantile_le_iff` and its monotonicity
+`MeasureTheory.Measure.monotoneOn_quantile`, and proves inverse-transform sampling for it as
+`MeasureTheory.Measure.map_quantile_volume_Ioo`; the sequence here (characterisation, then
+monotonicity and measurability, then the preimage of `Iic x` as an interval, then
+`Measure.ext_of_Iic`) is that one. Its inverse-transform sampling theorem is in turn adapted from
+Cameron Freer's `Graphon/MeasureIso.lean`. That module is not imported because it does not compile
+at the pinned Mathlib, and it is stated for its own infimum, whereas the theorem here takes any
+function satisfying the characterisation.
 -/
 
 @[expose] public section
@@ -110,10 +123,7 @@ theorem IsQuantileFunction.aemeasurable (h : IsQuantileFunction F q) :
 
 /-- **The law of a quantile function has distribution function `F`.** Pushing Lebesgue measure on
 `[0, 1]` forward along a quantile function of `F` gives `F x` as the measure of `Iic x`, provided
-`F x ≤ 1`, which every distribution function satisfies.
-
-The proof is the length of the interval of variates whose quantile is at most `x`, which the
-characterisation identifies up to the two endpoints. -/
+`F x ≤ 1`, which every distribution function satisfies. -/
 theorem IsQuantileFunction.map_apply_Iic (h : IsQuantileFunction F q) {x : ℝ} (hx : F x ≤ 1) :
     ((volume.restrict (Icc (0 : ℝ) 1)).map q) (Iic x) = ENNReal.ofReal (F x) := by
   rw [map_apply_of_aemeasurable h.aemeasurable measurableSet_Iic,
@@ -161,17 +171,8 @@ theorem isQuantileFunction_cdf_expMeasure {r : ℝ} (hr : 0 < r) :
   have hlog : Real.log (1 - u) < 0 := Real.log_neg h1u (by linarith [hu.1])
   simp only [cdf_expMeasure_eq hr]
   split_ifs with hx
-  · constructor
-    · intro h
-      rw [div_le_iff₀ hr] at h
-      have hle : -(r * x) ≤ Real.log (1 - u) := by linarith
-      have := (Real.le_log_iff_exp_le h1u).1 hle
-      linarith
-    · intro h
-      have hle : Real.exp (-(r * x)) ≤ 1 - u := by linarith
-      have := (Real.le_log_iff_exp_le h1u).2 hle
-      rw [div_le_iff₀ hr]
-      linarith
+  · rw [div_le_iff₀ hr, le_sub_comm, ← Real.le_log_iff_exp_le h1u]
+    constructor <;> intro h <;> linarith
   · rw [not_le] at hx
     have hpos : 0 < -Real.log (1 - u) / r := div_pos (by linarith) hr
     exact ⟨fun h => absurd (hpos.trans_le h) (by linarith),
@@ -179,41 +180,24 @@ theorem isQuantileFunction_cdf_expMeasure {r : ℝ} (hr : 0 < r) :
 
 /-- **Inverse transform for the exponential law.** On `[0, 1]` with Lebesgue measure,
 `u ↦ -log (1 - u) / r` has the exponential law of rate `r`. -/
-theorem hasLaw_neg_log_one_sub_div {r : ℝ} (hr : 0 < r) :
+theorem hasLaw_neg_log_one_sub_div_expMeasure {r : ℝ} (hr : 0 < r) :
     HasLaw (fun u => -Real.log (1 - u) / r) (expMeasure r) (volume.restrict (Icc (0 : ℝ) 1)) :=
   haveI := isProbabilityMeasure_expMeasure hr
   (isQuantileFunction_cdf_expMeasure hr).hasLaw_cdf
 
 /-- Lebesgue measure on `[0, 1]` is invariant under the reflection `u ↦ 1 - u`. -/
-theorem map_one_sub_restrict_Icc :
-    (volume.restrict (Icc (0 : ℝ) 1)).map (fun u => 1 - u) = volume.restrict (Icc (0 : ℝ) 1) := by
-  have hpre : (fun u : ℝ => 1 - u) ⁻¹' Icc (0 : ℝ) 1 = Icc (0 : ℝ) 1 := by
-    ext u
-    simp only [mem_preimage, mem_Icc]
-    constructor <;> exact fun h => ⟨by linarith [h.2], by linarith [h.1]⟩
-  have h := Measure.restrict_map (μ := (volume : Measure ℝ)) (f := fun u : ℝ => 1 - u)
-    (by fun_prop) (s := Icc (0 : ℝ) 1) measurableSet_Icc
-  rw [hpre, (volume.measurePreserving_sub_left 1).map_eq] at h
-  exact h.symm
+theorem measurePreserving_one_sub_volume_restrict_Icc :
+    MeasurePreserving (fun u : ℝ => 1 - u) (volume.restrict (Icc (0 : ℝ) 1))
+      (volume.restrict (Icc (0 : ℝ) 1)) := by
+  simpa using (volume.measurePreserving_sub_left (1 : ℝ)).restrict_preimage
+    (measurableSet_Icc (a := (0 : ℝ)) (b := 1))
 
 /-- The usual form of the exponential sampler: on `[0, 1]` with Lebesgue measure,
 `u ↦ -log u / r` also has the exponential law of rate `r`, because the reflection `u ↦ 1 - u`
 preserves that measure. -/
-theorem hasLaw_neg_log_div {r : ℝ} (hr : 0 < r) :
+theorem hasLaw_neg_log_div_expMeasure {r : ℝ} (hr : 0 < r) :
     HasLaw (fun u => -Real.log u / r) (expMeasure r) (volume.restrict (Icc (0 : ℝ) 1)) := by
-  have h := hasLaw_neg_log_one_sub_div hr
-  have hT : AEMeasurable (fun u : ℝ => 1 - u) (volume.restrict (Icc (0 : ℝ) 1)) := by fun_prop
-  have hg : AEMeasurable (fun v : ℝ => -Real.log (1 - v) / r)
-      ((volume.restrict (Icc (0 : ℝ) 1)).map (fun u : ℝ => 1 - u)) := by
-    rw [map_one_sub_restrict_Icc]
-    exact h.aemeasurable
-  have hcomp : (fun u : ℝ => -Real.log u / r)
-      = (fun v : ℝ => -Real.log (1 - v) / r) ∘ (fun u : ℝ => 1 - u) := by
-    ext u
-    simp
-  refine ⟨?_, ?_⟩
-  · rw [hcomp]
-    exact hg.comp_aemeasurable hT
-  · rw [hcomp, ← AEMeasurable.map_map_of_aemeasurable hg hT, map_one_sub_restrict_Icc, h.map_eq]
+  simpa [Function.comp_def] using (hasLaw_neg_log_one_sub_div_expMeasure hr).comp
+    measurePreserving_one_sub_volume_restrict_Icc.hasLaw
 
 end EpsilonEridani
